@@ -123,7 +123,7 @@ void Multiplication(MatrixCRS* A, MatrixCRS* B, MatrixCRS* Result) {
   }
   InitializeMatrix(N, col.size(), Result);
 
-  for (int j = 0; j < col.size(); j++) {
+  for (int j = 0; j < static_cast<int>(col.size()); j++) {
     Result->Col[j] = col[j];
     Result->Value[j] = values[j];
   }
