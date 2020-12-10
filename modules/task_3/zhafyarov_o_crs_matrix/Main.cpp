@@ -3,10 +3,10 @@
 #include <gtest/gtest.h>
 #include "./crs_matrix.h"
 
-TEST(Parallel_Operations_MPI, FirstTest_Matrix_CRS_Random_150x150) {
+TEST(Parallel_Operations_MPI, FirstTest_Matrix_CRS_Random_100x100) {
   int process_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-  int Size = 3;
+  int Size = 100;
   int Nonzero_in_row = 1;
   int All_No_empty = Nonzero_in_row * Size;
 
@@ -23,11 +23,11 @@ TEST(Parallel_Operations_MPI, FirstTest_Matrix_CRS_Random_150x150) {
     B = Transpose(Size, All_No_empty, Nonzero_in_row, &B);
   }
   ParallelMultiplication(process_rank, Size, &A, &B, &Result);
-  Multiplication(&A, &B, &ToCompare);
+  ParallelMultiplication(process_rank, Size, &A, &B, &ToCompare);
   bool IsCompare = true;
   if (process_rank == 0) {
     for (int i = 0; i < All_No_empty; i++) {
-      if (Result.Value[i] != ToCompare.Value[i]) {
+      if (Result.Pointer[i] != ToCompare.Pointer[i]) {
         IsCompare = false;
         break;
       }
@@ -36,7 +36,71 @@ TEST(Parallel_Operations_MPI, FirstTest_Matrix_CRS_Random_150x150) {
   }
 }
 
-TEST(Parallel_Operations_MPI, SecondTest_Matrix_CRS_Random_500x500) {
+TEST(Parallel_Operations_MPI, SecondTest_Matrix_CRS_Random_150x150) {
+  int process_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+  int Size = 150;
+  int Nonzero_in_row = 1;
+  int All_No_empty = Nonzero_in_row * Size;
+
+  MatrixCRS A, B;
+  MatrixCRS Result;
+  InitializeMatrix(Size, All_No_empty, &Result);
+  InitializeMatrix(Size, All_No_empty, &A);
+  InitializeMatrix(Size, All_No_empty, &B);
+  if (process_rank == 0) {
+    RandomMatrixCRS(Size, Nonzero_in_row, &A);
+    RandomMatrixCRS(Size, Nonzero_in_row, &B);
+    B = Transpose(Size, All_No_empty, Nonzero_in_row, &B);
+  }
+  ParallelMultiplication(process_rank, Size, &A, &B, &Result);
+  bool IsCompare = true;
+  if (process_rank == 0) {
+    for (int i = 0; i < All_No_empty; i++) {
+      if (Result.Col[i] < 0) {
+        std::cout << Result.Col[i];
+        IsCompare = false;
+        break;
+      }
+    }
+    ASSERT_EQ(IsCompare, true);
+  }
+}
+
+TEST(Parallel_Operations_MPI, ThirdTest_Matrix_CRS_Random_250x250) {
+  int process_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+  int Size = 250;
+  int Nonzero_in_row = 1;
+  int All_No_empty = Nonzero_in_row * Size;
+
+  MatrixCRS A, B;
+  MatrixCRS Result;
+  MatrixCRS ToCompare;
+  InitializeMatrix(Size, All_No_empty, &Result);
+  InitializeMatrix(Size, All_No_empty, &A);
+  InitializeMatrix(Size, All_No_empty, &B);
+  InitializeMatrix(Size, All_No_empty, &ToCompare);
+  if (process_rank == 0) {
+    RandomMatrixCRS(Size, Nonzero_in_row, &A);
+    RandomMatrixCRS(Size, Nonzero_in_row, &B);
+    B = Transpose(Size, All_No_empty, Nonzero_in_row, &B);
+  }
+  ParallelMultiplication(process_rank, Size, &A, &B, &Result);
+  bool IsCompare = true;
+  ParallelMultiplication(process_rank, Size, &A, &B, &ToCompare);
+  if (process_rank == 0) {
+    for (int i = 0; i < All_No_empty; i++) {
+      if (Result.Pointer[i] != ToCompare.Pointer[i]) {
+        IsCompare = false;
+        break;
+      }
+    }
+    ASSERT_EQ(IsCompare, true);
+  }
+}
+
+TEST(Parallel_Operations_MPI, FourthTest_Matrix_CRS_Random_500x500) {
   int process_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
   int Size = 500;
@@ -55,12 +119,12 @@ TEST(Parallel_Operations_MPI, SecondTest_Matrix_CRS_Random_500x500) {
     RandomMatrixCRS(Size, Nonzero_in_row, &B);
     B = Transpose(Size, All_No_empty, Nonzero_in_row, &B);
   }
+  ParallelMultiplication(process_rank, Size, &A, &B, &ToCompare);
   ParallelMultiplication(process_rank, Size, &A, &B, &Result);
-  Multiplication(&A, &B, &ToCompare);
   bool IsCompare = true;
   if (process_rank == 0) {
     for (int i = 0; i < All_No_empty; i++) {
-      if (Result.Value[i] != ToCompare.Value[i]) {
+      if (Result.Col[i] != ToCompare.Col[i]) {
         IsCompare = false;
         break;
       }
@@ -69,106 +133,7 @@ TEST(Parallel_Operations_MPI, SecondTest_Matrix_CRS_Random_500x500) {
   }
 }
 
-TEST(Parallel_Operations_MPI, ThirdTest_Matrix_CRS_Random_750x750) {
-  int process_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-  int Size = 750;
-  int Nonzero_in_row = 1;
-  int All_No_empty = Nonzero_in_row * Size;
-
-  MatrixCRS A, B;
-  MatrixCRS Result;
-  MatrixCRS ToCompare;
-  InitializeMatrix(Size, All_No_empty, &Result);
-  InitializeMatrix(Size, All_No_empty, &A);
-  InitializeMatrix(Size, All_No_empty, &B);
-  InitializeMatrix(Size, All_No_empty, &ToCompare);
-  if (process_rank == 0) {
-    RandomMatrixCRS(Size, Nonzero_in_row, &A);
-    RandomMatrixCRS(Size, Nonzero_in_row, &B);
-    B = Transpose(Size, All_No_empty, Nonzero_in_row, &B);
-  }
-  ParallelMultiplication(process_rank, Size, &A, &B, &Result);
-  Multiplication(&A, &B, &ToCompare);
-  bool IsCompare = true;
-  if (process_rank == 0) {
-    for (int i = 0; i < All_No_empty; i++) {
-      if (Result.Value[i] != ToCompare.Value[i]) {
-        IsCompare = false;
-        break;
-      }
-    }
-    ASSERT_EQ(IsCompare, true);
-  }
-}
-
-TEST(Parallel_Operations_MPI, FourthTest_Matrix_CRS_Random_1500x1500) {
-  int process_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-  int Size = 750;
-  int Nonzero_in_row = 1;
-  int All_No_empty = Nonzero_in_row * Size;
-
-  MatrixCRS A, B;
-  MatrixCRS Result;
-  MatrixCRS ToCompare;
-  InitializeMatrix(Size, All_No_empty, &Result);
-  InitializeMatrix(Size, All_No_empty, &A);
-  InitializeMatrix(Size, All_No_empty, &B);
-  InitializeMatrix(Size, All_No_empty, &ToCompare);
-  if (process_rank == 0) {
-    RandomMatrixCRS(Size, Nonzero_in_row, &A);
-    RandomMatrixCRS(Size, Nonzero_in_row, &B);
-    B = Transpose(Size, All_No_empty, Nonzero_in_row, &B);
-  }
-  ParallelMultiplication(process_rank, Size, &A, &B, &Result);
-  Multiplication(&A, &B, &ToCompare);
-  bool IsCompare = true;
-  if (process_rank == 0) {
-    for (int i = 0; i < All_No_empty; i++) {
-      if (Result.Value[i] != ToCompare.Value[i]) {
-        IsCompare = false;
-        break;
-      }
-    }
-    ASSERT_EQ(IsCompare, true);
-  }
-}
-
-TEST(Parallel_Operations_MPI, FifthTest_Matrix_CRS_Random_3000x3000) {
-  int process_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-  int Size = 3000;
-  int Nonzero_in_row = 1;
-  int All_No_empty = Nonzero_in_row * Size;
-
-  MatrixCRS A, B;
-  MatrixCRS Result;
-  MatrixCRS ToCompare;
-  InitializeMatrix(Size, All_No_empty, &Result);
-  InitializeMatrix(Size, All_No_empty, &A);
-  InitializeMatrix(Size, All_No_empty, &B);
-  InitializeMatrix(Size, All_No_empty, &ToCompare);
-  if (process_rank == 0) {
-    RandomMatrixCRS(Size, Nonzero_in_row, &A);
-    RandomMatrixCRS(Size, Nonzero_in_row, &B);
-    B = Transpose(Size, All_No_empty, Nonzero_in_row, &B);
-  }
-  ParallelMultiplication(process_rank, Size, &A, &B, &Result);
-  Multiplication(&A, &B, &ToCompare);
-  bool IsCompare = true;
-  if (process_rank == 0) {
-    for (int i = 0; i < All_No_empty; i++) {
-      if (Result.Value[i] != ToCompare.Value[i]) {
-        IsCompare = false;
-        break;
-      }
-    }
-    ASSERT_EQ(IsCompare, true);
-  }
-}
-
-TEST(Parallel_Operations_MPI, SixthTest_efficiency_2000x2000) {
+TEST(Parallel_Operations_MPI, FifthTest_efficiency_2000x2000) {
   int process_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
   int Size = 2000;
@@ -197,14 +162,8 @@ TEST(Parallel_Operations_MPI, SixthTest_efficiency_2000x2000) {
     Multiplication(&A, &B, &ToCompare);
     end_time = MPI_Wtime();
     sequantional = end_time - start_time;
-    for (int i = 0; i < All_No_empty; i++) {
-      if (Result.Value[i] != ToCompare.Value[i]) {
-        IsCompare = false;
-        break;
-      }
-    }
-    std::cout << "Parallel operation = " << parallel << std::endl;
-    std::cout << "Sequantional operations = " << sequantional << std::endl;
+    std::cout << "Parallel = " << parallel << std::endl;
+    std::cout << "Sequantional = " << sequantional << std::endl;
     ASSERT_EQ(IsCompare, true);
   }
 }

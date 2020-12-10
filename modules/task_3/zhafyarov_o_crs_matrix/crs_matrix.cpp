@@ -30,7 +30,7 @@ void RandomMatrixCRS(int Size, int No_empty, MatrixCRS* Matrix) {
   for (int i = 0; i < Size; i++) {
     for (int j = 0; j < No_empty; j++) {
       do {
-        Matrix->Col[i * No_empty + j] = Generate(0, Size * 4);
+        Matrix->Col[i * No_empty + j] = Generate(1, Size * 4);
         f = 0;
         for (int k = 0; k < j; k++) {
           if (Matrix->Col[i * No_empty + j] == Matrix->Col[i * No_empty + k]) {
@@ -166,7 +166,7 @@ void RowIndexProc(int N, MatrixCRS* mtx, int cntInRow) {
 
 void ParallelMultiplication(int process_rank, int Size, MatrixCRS* A, MatrixCRS* B, MatrixCRS* Result) {
   MPI_Comm_size(MPI_COMM_WORLD, &process_number);
-  if (process_number > Size) {
+  if (process_number >= Size) {
     if (process_rank == 0) {
       Multiplication(A, B, Result);
       return;
